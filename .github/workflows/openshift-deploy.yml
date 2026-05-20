@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  OPENSHIFT_namespace: mails2radhika-vk-dev
+  OPENSHIFT_NAMESPACE: mails2radhika-vk-dev
   BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/product-catalog-backend
   FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/product-catalog-frontend
 
@@ -60,7 +60,6 @@ jobs:
 
       - name: Apply OpenShift manifests
         run: |
-          oc apply -f k8s/namespace.yaml
           oc apply -f k8s/mysql/secret.yaml
           oc apply -f k8s/mysql/pvc.yaml
           oc apply -f k8s/mysql/deployment.yaml
