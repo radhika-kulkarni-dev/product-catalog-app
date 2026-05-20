@@ -17,4 +17,4 @@ spec:
         - name: frontend
           image: ghcr.io/radhika-kulkarni-dev/product-catalog-frontend:latest
           ports:
-            - containerPort: 80
+            - containerPort: 8080

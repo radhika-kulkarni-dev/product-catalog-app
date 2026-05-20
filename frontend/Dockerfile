@@ -8,12 +8,11 @@ ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
 
-
 COPY . .
 RUN npm run build
 
-# Step 2: Serve with Nginx
-FROM nginx:alpine
+# Step 2: Serve with OpenShift-friendly Nginx
+FROM nginxinc/nginx-unprivileged:alpine
 COPY --from=build /app/build /usr/share/nginx/html
 
-EXPOSE 80
+EXPOSE 8080
