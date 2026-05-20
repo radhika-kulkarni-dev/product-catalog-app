@@ -4,6 +4,7 @@ metadata:
   name: mysql
   namespace: product-catalog-app
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: mysql
@@ -17,9 +18,15 @@ spec:
           image: mysql:8
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: admin
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
             - name: MYSQL_DATABASE
-              value: productDB
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_DATABASE
           ports:
             - containerPort: 3306
           volumeMounts:
@@ -27,4 +34,5 @@ spec:
               mountPath: /var/lib/mysql
       volumes:
         - name: mysql-data
-          emptyDir: {}   # for demo only; use PVC in real env
+          persistentVolumeClaim:
+            claimName: mysql-data

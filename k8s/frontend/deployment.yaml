@@ -15,6 +15,6 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: <your-registry>/frontend:1.0
+          image: ghcr.io/radhika-kulkarni-dev/product-catalog-frontend:latest
           ports:
             - containerPort: 80

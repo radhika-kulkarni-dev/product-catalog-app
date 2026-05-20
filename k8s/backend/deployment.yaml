@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: <your-registry>/backend:1.0
+          image: ghcr.io/radhika-kulkarni-dev/product-catalog-backend:latest
           ports:
             - containerPort: 8080
           env:
@@ -24,4 +24,7 @@ spec:
             - name: SPRING_DATASOURCE_USERNAME
               value: root
             - name: SPRING_DATASOURCE_PASSWORD
-              value: admin
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD

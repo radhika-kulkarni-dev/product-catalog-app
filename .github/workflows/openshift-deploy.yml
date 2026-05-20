@@ -1,0 +1,84 @@
+name: Build and Deploy to OpenShift
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  OPENSHIFT_NAMESPACE: product-catalog-app
+  BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/product-catalog-backend
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/product-catalog-frontend
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build backend image
+        run: |
+          docker build -t $BACKEND_IMAGE:${{ github.sha }} -t $BACKEND_IMAGE:latest ./backend
+
+      - name: Push backend image
+        run: |
+          docker push $BACKEND_IMAGE:${{ github.sha }}
+          docker push $BACKEND_IMAGE:latest
+
+      - name: Build frontend image
+        run: |
+          docker build \
+            --build-arg REACT_APP_API_BASE_URL=${{ secrets.REACT_APP_API_BASE_URL }} \
+            -t $FRONTEND_IMAGE:${{ github.sha }} \
+            -t $FRONTEND_IMAGE:latest \
+            ./frontend
+
+      - name: Push frontend image
+        run: |
+          docker push $FRONTEND_IMAGE:${{ github.sha }}
+          docker push $FRONTEND_IMAGE:latest
+
+      - name: Install OpenShift CLI
+        run: |
+          curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz -o oc.tar.gz
+          tar -xzf oc.tar.gz
+          sudo mv oc /usr/local/bin/oc
+          oc version --client
+
+      - name: Login to OpenShift
+        run: |
+          oc login ${{ secrets.OPENSHIFT_SERVER }} --token=${{ secrets.OPENSHIFT_TOKEN }} --insecure-skip-tls-verify=true
+
+      - name: Apply OpenShift manifests
+        run: |
+          oc apply -f k8s/namespace.yaml
+          oc apply -f k8s/mysql/secret.yaml
+          oc apply -f k8s/mysql/pvc.yaml
+          oc apply -f k8s/mysql/deployment.yaml
+          oc apply -f k8s/mysql/service.yaml
+          oc apply -f k8s/backend/deployment.yaml
+          oc apply -f k8s/backend/service.yaml
+          oc apply -f k8s/backend/route.yaml
+          oc apply -f k8s/frontend/deployment.yaml
+          oc apply -f k8s/frontend/service.yaml
+          oc apply -f k8s/frontend/route.yaml
+
+      - name: Update deployment images
+        run: |
+          oc -n $OPENSHIFT_NAMESPACE set image deployment/backend backend=$BACKEND_IMAGE:${{ github.sha }}
+          oc -n $OPENSHIFT_NAMESPACE set image deployment/frontend frontend=$FRONTEND_IMAGE:${{ github.sha }}
+
+      - name: Wait for rollout
+        run: |
+          oc -n $OPENSHIFT_NAMESPACE rollout status deployment/mysql
+          oc -n $OPENSHIFT_NAMESPACE rollout status deployment/backend
+          oc -n $OPENSHIFT_NAMESPACE rollout status deployment/frontend
