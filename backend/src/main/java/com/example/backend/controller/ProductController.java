@@ -1,8 +1,8 @@
 package com.example.backend.controller;
 
-
 import com.example.backend.model.Product;
 import com.example.backend.service.ProductService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,7 +24,19 @@ public class ProductController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public Product add(@RequestBody Product product) {
         return service.save(product);
+    }
+
+    @PatchMapping("/{id}")
+    public Product updatePartial(@PathVariable Long id, @RequestBody Product product) {
+        return service.updatePartial(id, product);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
+        service.deleteById(id);
     }
 }
