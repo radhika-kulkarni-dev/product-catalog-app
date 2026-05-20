@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: mysql-data
-  namespace: product-catalog-app
+  namespace: mails2radhika-vk-dev
 spec:
   accessModes:
     - ReadWriteOnce
